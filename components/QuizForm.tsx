@@ -7,26 +7,38 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 const ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
 
 type Messenger = "Telegram" | "WhatsApp";
-type FieldId = "sphere" | "channels" | "leads" | "dropoff" | "contact" | "instagram";
+type FieldId = "sphere" | "instagram" | "channels" | "leads" | "dropoff" | "contact";
 type Answers = Record<FieldId, string>;
 
-const textQuestions: { id: Exclude<FieldId, "contact" | "instagram">; label: string; placeholder: string; multiline?: boolean }[] = [
-  { id: "sphere", label: "Назовите сферу вашей деятельности", placeholder: "Например: салон красоты, доставка еды, ремонт квартир" },
-  { id: "channels", label: "Как привлекаете клиентов?", placeholder: "Например: реклама в Instagram, Авито, сарафанное радио", multiline: true },
-  { id: "leads", label: "Где они оставляют заявку?", placeholder: "Например: пишут в директ, звонят по телефону, оставляют заявку на сайте", multiline: true },
-  { id: "dropoff", label: "Где они останавливаются?", placeholder: "На каком этапе клиенты пропадают: не отвечают после цены, не доходят до оплаты, теряются в переписке", multiline: true },
-];
+const emptyAnswers: Answers = { sphere: "", instagram: "", channels: "", leads: "", dropoff: "", contact: "" };
+
+// Шаги квиза: на экране один или два вопроса
+const steps: FieldId[][] = [["sphere", "instagram"], ["channels"], ["leads"], ["dropoff"], ["contact"]];
+
+const labels: Record<FieldId, string> = {
+  sphere: "Назовите сферу вашей деятельности",
+  instagram: "Ваш логин в Instagram",
+  channels: "Как привлекаете клиентов?",
+  leads: "Где они оставляют заявку?",
+  dropoff: "Где они останавливаются?",
+  contact: "Как с вами связаться?",
+};
+
+const placeholders: Record<FieldId, string> = {
+  sphere: "Салон красоты, доставка еды, ремонт квартир",
+  instagram: "username",
+  channels: "Реклама в Instagram, Авито, сарафанное радио",
+  leads: "Пишут в директ, звонят по телефону, оставляют заявку на сайте",
+  dropoff: "Не отвечают после цены, не доходят до оплаты, теряются в переписке",
+  contact: "",
+};
+
+const multiline: FieldId[] = ["channels", "leads", "dropoff"];
 
 const contactHint: Record<Messenger, string> = {
   Telegram: "Ваш ник в Telegram, например @username",
   WhatsApp: "Номер WhatsApp, например +7 900 123-45-67",
 };
-
-const emptyAnswers: Answers = { sphere: "", instagram: "", channels: "", leads: "", dropoff: "", contact: "" };
-
-// Порядок вопросов. На телефоне анкета показывает их по одному.
-const order: FieldId[] = ["sphere", "instagram", "channels", "leads", "dropoff", "contact"];
-const isPhone = () => window.matchMedia("(max-width: 639px)").matches;
 
 const errorText = (id: FieldId) =>
   id === "contact" ? "Укажите контакт, чтобы мы могли ответить"
@@ -35,36 +47,41 @@ const errorText = (id: FieldId) =>
 
 function TelegramIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true">
-      <path fill="currentColor" d="M3.4 11.2 19.6 5c.8-.3 1.5.2 1.2 1.4l-2.8 13c-.2.9-.8 1.2-1.6.7l-4.3-3.2-2.1 2c-.2.2-.4.4-.9.4l.3-4.4 8-7.2c.3-.3-.1-.5-.5-.2l-9.9 6.2-4.2-1.3c-.9-.3-.9-.9.2-1.4z" />
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 4 3 11l5.5 2 2 6 3-3.5 4.5 3.5L21 4Z" />
+      <path d="m8.5 13 12.5-9" />
     </svg>
   );
 }
 
 function WhatsAppIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true">
-      <path fill="currentColor" d="M12 2.2a9.7 9.7 0 0 0-8.4 14.6L2.3 21.7l5-1.3A9.7 9.7 0 1 0 12 2.2zm0 17.7a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 19.9zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.8 2c0 1.2.8 2.3 1 2.5.1.2 1.7 2.6 4.1 3.6 1.5.7 2.1.7 2.9.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.4-.4z" />
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 21l1.6-4.7A8.5 8.5 0 1 1 8 19.5L3 21Z" />
+      <path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a3.5 3.5 0 0 1-1.8-1.8l.8-1-1-2L9 9.5Z" />
     </svg>
   );
 }
 
-function Question({ num, label, labelFor, labelId, error, current, children }: {
-  num: number; label: string; labelFor?: string; labelId?: string; error?: string; current: boolean; children: ReactNode;
-}) {
-  const labelClass = "pt-[3px] text-lg font-semibold leading-[1.3] tracking-[-0.01em] sm:pt-[5px] sm:text-[19px]";
+function Arrow({ dir = "right" }: { dir?: "left" | "right" }) {
   return (
-    <div className={`${current ? "" : "max-sm:hidden"} grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 gap-y-3 px-[18px] pb-2 pt-5 sm:border-b sm:border-line sm:grid-cols-[44px_minmax(0,1fr)] sm:gap-x-4 sm:px-8 sm:py-7`}>
-      <span aria-hidden="true" className="grid size-8 place-items-center rounded-lg border border-accent-line bg-accent-soft text-sm font-semibold tabular-nums text-accent sm:size-9 sm:text-[15px]">
-        {num}
-      </span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {dir === "right" ? <path d="M5 12h14M13 6l6 6-6 6" /> : <path d="M19 12H5M11 6l-6 6 6 6" />}
+    </svg>
+  );
+}
+
+function Question({ label, labelFor, labelId, error, children }: {
+  label: string; labelFor?: string; labelId?: string; error?: string; children: ReactNode;
+}) {
+  const cls = "text-[22px] font-semibold leading-[1.25] tracking-[-0.02em] sm:text-[26px]";
+  return (
+    <div className="flex flex-col gap-5">
       {labelFor
-        ? <label htmlFor={labelFor} className={labelClass}>{label}</label>
-        : <span id={labelId} className={labelClass}>{label}</span>}
-      <div className="col-span-2 flex min-w-0 flex-col gap-3 sm:col-start-2 sm:col-end-3">
-        {children}
-        {error && <p className="m-0 text-sm text-error">{error}</p>}
-      </div>
+        ? <label htmlFor={labelFor} className={cls}>{label}</label>
+        : <span id={labelId} className={cls}>{label}</span>}
+      {children}
+      {error && <p role="alert" className="-mt-2 m-0 text-sm font-medium text-error">{error}</p>}
     </div>
   );
 }
@@ -77,45 +94,35 @@ export function QuizForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "done">("idle");
   const [step, setStep] = useState(0);
   const moved = useRef(false);
+  const last = steps.length - 1;
 
-  // После перехода к другому вопросу ставим курсор в его поле
+  // После перехода на другой шаг ставим курсор в первое поле
   useEffect(() => {
     if (!moved.current) return;
-    document.getElementById(order[step])?.focus({ preventScroll: true });
+    document.getElementById(steps[step][0])?.focus({ preventScroll: true });
   }, [step]);
 
-  const goTo = (next: number) => { moved.current = true; setStep(next); };
-
-  const next = () => {
-    const id = order[step];
-    if (!answers[id].trim()) {
-      setErrors((e) => ({ ...e, [id]: errorText(id) }));
-      document.getElementById(id)?.focus();
-      return;
-    }
-    goTo(step + 1);
-  };
+  const goTo = (n: number) => { moved.current = true; setStep(n); };
 
   const update = (id: FieldId, value: string) => {
     setAnswers((a) => ({ ...a, [id]: value }));
     if (errors[id]) setErrors((e) => ({ ...e, [id]: undefined }));
   };
 
+  // Проверяет поля текущего шага и подсвечивает пустые
+  const stepIsValid = (n: number) => {
+    const bad = steps[n].filter((id) => !answers[id].trim());
+    setErrors((e) => ({ ...e, ...Object.fromEntries(bad.map((id) => [id, errorText(id)])) }));
+    if (bad.length) document.getElementById(bad[0])?.focus();
+    return bad.length === 0;
+  };
+
+  const next = () => { if (stepIsValid(step)) goTo(step + 1); };
+
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    // Enter на телефоне до последнего вопроса работает как «Далее»
-    if (isPhone() && step < order.length - 1) { next(); return; }
-
-    const found: Partial<Record<FieldId, string>> = {};
-    order.forEach((id) => { if (!answers[id].trim()) found[id] = errorText(id); });
-    setErrors(found);
-    const firstInvalid = order.find((id) => found[id]);
-    if (firstInvalid) {
-      if (isPhone()) goTo(order.indexOf(firstInvalid));
-      else document.getElementById(firstInvalid)?.focus();
-      return;
-    }
+    if (step < last) { next(); return; }
+    if (!stepIsValid(step)) return;
 
     const instagram = "@" + answers.instagram.trim().replace(/^@+/, "");
     setStatus("sending");
@@ -146,129 +153,126 @@ export function QuizForm() {
     }
   }
 
-  const renderText = (q: (typeof textQuestions)[number], num: number) => {
-    const props = {
-      id: q.id,
-      name: q.id,
-      className: `field${q.multiline ? " min-h-[92px] resize-y" : ""}`,
-      placeholder: q.placeholder,
-      value: answers[q.id],
-      "aria-invalid": errors[q.id] ? true : undefined,
-      onChange: (ev: { target: { value: string } }) => update(q.id, ev.target.value),
-    };
-    return (
-      <Question key={q.id} num={num} current={step === num - 1} label={q.label} labelFor={q.id} error={errors[q.id]}>
-        {q.multiline ? <textarea {...props} /> : <input type="text" {...props} />}
-      </Question>
-    );
-  };
-
-  const sheet = "rounded-xl border border-line bg-white shadow-sheet";
+  const sheet = "rounded-2xl border border-line bg-white shadow-sheet";
 
   if (status === "done") {
     return (
-      <div className={`${sheet} flex flex-col items-center gap-3.5 px-8 py-14 text-center`}>
+      <div className={`${sheet} step-in flex flex-col items-center gap-4 px-8 py-16 text-center sm:py-20`}>
         <span aria-hidden="true" className="grid size-14 place-items-center rounded-full bg-accent-soft text-accent">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
         </span>
-        <h2 className="m-0 text-[30px] font-semibold leading-[1.15] tracking-[-0.02em]">Спасибо, ответы получены</h2>
-        <p className="m-0 max-w-[28em] text-muted">Скоро напишу вам в {messenger} и расскажу, что можно автоматизировать в вашем бизнесе.</p>
+        <h2 className="m-0 text-[30px] font-semibold leading-[1.15] tracking-[-0.03em]">Спасибо, ответы получены</h2>
+        <p className="m-0 max-w-[26em] text-muted">Скоро напишу вам в {messenger} и расскажу, что можно автоматизировать в вашем бизнесе.</p>
       </div>
     );
   }
 
+  const renderField = (id: FieldId) => {
+    if (id === "instagram") {
+      return (
+        <Question key={id} label={labels[id]} labelFor={id} error={errors[id]}>
+          <div className="relative">
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-medium text-faint">@</span>
+            <input
+              id={id} name={id} type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
+              className="field pl-9" placeholder={placeholders[id]} aria-invalid={errors[id] ? true : undefined}
+              value={answers[id]} onChange={(ev) => update(id, ev.target.value.replace(/^@+/, ""))}
+            />
+          </div>
+        </Question>
+      );
+    }
+
+    if (id === "contact") {
+      return (
+        <Question key={id} label={labels[id]} labelId="contact-label" error={errors[id]}>
+          <div role="radiogroup" aria-labelledby="contact-label" className="grid grid-cols-2 gap-3">
+            {(["Telegram", "WhatsApp"] as const).map((m) => (
+              <label key={m} className="relative">
+                <input
+                  type="radio" name="messenger" value={m} checked={messenger === m}
+                  onChange={() => { setMessenger(m); document.getElementById("contact")?.focus(); }}
+                  className="peer absolute opacity-0"
+                />
+                <span className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-line bg-white px-4 py-[15px] text-[15px] font-medium leading-none text-faint transition-colors duration-300 hover:border-line-strong hover:text-ink peer-checked:border-accent peer-checked:bg-accent-soft peer-checked:text-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-accent">
+                  {m === "Telegram" ? <TelegramIcon /> : <WhatsAppIcon />}
+                  {m}
+                </span>
+              </label>
+            ))}
+          </div>
+          <input
+            id="contact" name="contact" type="text" autoComplete="off" className="field"
+            inputMode={messenger === "WhatsApp" ? "tel" : "text"}
+            placeholder={contactHint[messenger]} aria-labelledby="contact-label"
+            aria-invalid={errors[id] ? true : undefined}
+            value={answers[id]} onChange={(ev) => update(id, ev.target.value)}
+          />
+        </Question>
+      );
+    }
+
+    const props = {
+      id, name: id, className: `field${multiline.includes(id) ? " min-h-[120px] resize-none" : ""}`,
+      placeholder: placeholders[id], value: answers[id], "aria-invalid": errors[id] ? true : undefined,
+      onChange: (ev: { target: { value: string } }) => update(id, ev.target.value),
+    };
+    return (
+      <Question key={id} label={labels[id]} labelFor={id} error={errors[id]}>
+        {multiline.includes(id) ? <textarea {...props} /> : <input type="text" {...props} />}
+      </Question>
+    );
+  };
+
   return (
-    <form noValidate onSubmit={onSubmit} className={`${sheet} flex flex-col`}>
-      <div className="flex flex-col gap-2.5 px-[18px] pt-5 sm:hidden" aria-live="polite">
-        <span className="text-sm font-medium tabular-nums text-faint">Вопрос {step + 1} из {order.length}</span>
-        <div className="h-1.5 overflow-hidden rounded-full bg-accent-soft">
-          <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${((step + 1) / order.length) * 100}%` }} />
-        </div>
+    <form noValidate onSubmit={onSubmit} className={`${sheet} overflow-hidden`}>
+      <div
+        className="h-1 bg-line" role="progressbar" aria-label="Прогресс анкеты"
+        aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={step + 1}
+      >
+        <div className="h-full rounded-r-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
       </div>
 
-      {renderText(textQuestions[0], 1)}
+      <div className="flex flex-col gap-10 px-6 pb-8 pt-8 sm:px-14 sm:pb-12 sm:pt-12">
+        <p className="m-0 text-[13px] font-medium uppercase tabular-nums tracking-[0.14em] text-faint">
+          Шаг {step + 1} из {steps.length}
+        </p>
 
-      <Question num={2} current={step === 1} label="Укажите ваш логин в Instagram" labelFor="instagram" error={errors.instagram}>
-        <div className="relative">
-          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-[15px] flex items-center text-muted">@</span>
-          <input
-            id="instagram" name="instagram" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
-            className="field pl-8" placeholder="username"
-            aria-invalid={errors.instagram ? true : undefined}
-            value={answers.instagram} onChange={(ev) => update("instagram", ev.target.value.replace(/^@+/, ""))}
-          />
+        <div key={step} className="step-in flex flex-col gap-10">
+          {steps[step].map(renderField)}
         </div>
-      </Question>
 
-      {textQuestions.slice(1).map((q, i) => renderText(q, i + 3))}
-
-      <Question num={6} current={step === 5} label="Укажите способ связи" labelId="contact-label" error={errors.contact}>
-        <div role="radiogroup" aria-labelledby="contact-label" className="grid grid-cols-2 gap-2.5">
-          {(["Telegram", "WhatsApp"] as const).map((m) => (
-            <label key={m} className="relative">
-              <input
-                type="radio" name="messenger" value={m} checked={messenger === m}
-                onChange={() => { setMessenger(m); document.getElementById("contact")?.focus(); }}
-                className="peer absolute opacity-0"
-              />
-              <span className="flex cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-line-strong bg-white px-3.5 py-[13px] font-medium leading-none text-muted transition-colors hover:border-accent hover:text-accent peer-checked:border-accent peer-checked:bg-accent-soft peer-checked:text-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-accent">
-                {m === "Telegram" ? <TelegramIcon /> : <WhatsAppIcon />}
-                {m}
-              </span>
-            </label>
-          ))}
-        </div>
         <input
-          id="contact" name="contact" type="text" autoComplete="off" className="field"
-          inputMode={messenger === "WhatsApp" ? "tel" : "text"}
-          placeholder={contactHint[messenger]} aria-labelledby="contact-label"
-          aria-invalid={errors.contact ? true : undefined}
-          value={answers.contact} onChange={(ev) => update("contact", ev.target.value)}
+          type="text" name="_honey" tabIndex={-1} autoComplete="off" aria-hidden="true"
+          className="absolute -left-[9999px]" value={honey} onChange={(ev) => setHoney(ev.target.value)}
         />
-      </Question>
 
-      <input
-        type="text" name="_honey" tabIndex={-1} autoComplete="off" aria-hidden="true"
-        className="absolute -left-[9999px]" value={honey} onChange={(ev) => setHoney(ev.target.value)}
-      />
-
-      <div className="flex flex-col items-center gap-3.5 px-[18px] pb-6 pt-4 text-center sm:p-8">
-        <div className="flex w-full gap-2.5 sm:hidden">
-          <button
-            type="button" onClick={() => goTo(step - 1)} disabled={step === 0}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-5 py-4 font-medium leading-none text-muted transition-colors hover:border-accent hover:text-accent disabled:invisible"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 19l-7-7 7-7" /></svg>
-            Назад
-          </button>
-          {step < order.length - 1 ? (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-3">
             <button
-              key="next" type="button" onClick={next}
-              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent px-5 py-4 font-semibold leading-none text-white transition-colors hover:bg-[#1d4ed8]"
+              type="button" onClick={() => goTo(step - 1)}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-3.5 text-[15px] font-medium leading-none text-faint transition-colors hover:text-ink ${step === 0 ? "invisible" : ""}`}
             >
-              Далее
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+              <Arrow dir="left" />
+              Назад
             </button>
-          ) : (
             <button
-              key="send" type="submit" disabled={status === "sending"}
-              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-cta px-5 py-4 font-semibold leading-none text-ink transition-colors hover:bg-cta-hover disabled:cursor-progress disabled:opacity-65"
+              type="submit" disabled={status === "sending"}
+              className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-accent px-7 py-4 text-base font-semibold leading-none text-white transition-colors duration-300 hover:bg-accent-deep disabled:cursor-progress disabled:opacity-65 max-sm:flex-1"
             >
-              {status === "sending" ? "Отправляем…" : "Отправить"}
+              {step < last ? "Далее" : status === "sending" ? "Отправляем…" : "Получить разбор"}
+              {step < last && <Arrow />}
             </button>
+          </div>
+          {status === "error" && (
+            <p role="alert" className="m-0 text-center text-[15px] text-error">Не получилось отправить ответы. Проверьте интернет и попробуйте ещё раз.</p>
+          )}
+          {step === last && (
+            <p className="m-0 text-center text-sm leading-relaxed text-faint">
+              Ответим в выбранном мессенджере, бесплатно разберём ваши процессы и покажем, где теряются клиенты.
+            </p>
           )}
         </div>
-        <button
-          type="submit" disabled={status === "sending"}
-          className="inline-flex w-auto max-sm:hidden cursor-pointer items-center justify-center gap-2.5 rounded-lg bg-cta px-8 py-[18px] text-[17px] font-semibold leading-none text-ink shadow-[0_1px_2px_rgb(15_23_42/.12)] transition-[background,box-shadow] hover:bg-cta-hover hover:shadow-[0_6px_16px_-8px_rgb(249_115_22/.7)] disabled:cursor-progress disabled:opacity-65"
-        >
-          {status === "sending" ? "Отправляем…" : "Узнать, как увеличить прибыль"}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
-        </button>
-        {status === "error" && (
-          <p role="alert" className="m-0 text-[15px] text-error">Не получилось отправить ответы. Проверьте интернет и попробуйте ещё раз.</p>
-        )}
-        <small className="max-w-[32em] text-sm text-faint">Ответим в выбранном мессенджере, бесплатно разберём ваши процессы и покажем, где теряются клиенты.</small>
       </div>
     </form>
   );

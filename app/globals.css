@@ -1,38 +1,41 @@
 @import "tailwindcss";
 
-/* Цвета и шрифт взяты с основного сайта «Автоматизация Бизнеса» */
+/* Палитра: холодный светлый фон, графитовый текст, один глубокий синий акцент */
 @theme {
-  --color-bg: #f4f6f9;
-  --color-line: #e2e8f0;
-  --color-line-strong: #cbd5e1;
-  --color-ink: #0f172a;
-  --color-muted: #475569;
-  --color-faint: #5b6b80;
-  --color-hint: #94a3b8;
-  --color-accent: #2563eb;
-  --color-accent-soft: #eff4ff;
-  --color-accent-line: #c7d7fb;
-  --color-cta: #f97316;
-  --color-cta-hover: #ea580c;
-  --color-error: #dc2626;
-  --font-sans: var(--font-golos), "Segoe UI", system-ui, sans-serif;
-  --shadow-sheet: 0 1px 2px rgb(15 23 42 / .04), 0 8px 24px -12px rgb(15 23 42 / .12);
+  --color-bg: #f6f7f9;
+  --color-line: #e7eaf0;
+  --color-line-strong: #d9dee7;
+  --color-ink: #0e1626;
+  --color-muted: #566074;
+  --color-faint: #7b8597;
+  --color-hint: #b3bac7;
+  --color-accent: #1f3fd1;
+  --color-accent-deep: #172fa3;
+  --color-accent-soft: #f1f4fd;
+  --color-accent-line: #cfd8f7;
+  --color-error: #c8372d;
+  --font-sans: "Manrope Variable", "Segoe UI", system-ui, sans-serif;
+  --shadow-sheet: 0 1px 2px rgb(14 22 38 / .03), 0 24px 48px -28px rgb(14 22 38 / .14);
 }
 
 html { background: var(--color-bg); accent-color: var(--color-accent); caret-color: var(--color-accent); }
 body { -webkit-font-smoothing: antialiased; }
-::selection { background: #cddcfd; color: var(--color-ink); }
-:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 8px; }
+::selection { background: #d5ddf8; color: var(--color-ink); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 10px; }
 
 @layer components {
   .field {
-    @apply w-full rounded-lg border border-line-strong bg-white px-[15px] py-[13px] text-base leading-normal text-ink
-      transition-[border-color,box-shadow] duration-200 placeholder:text-hint hover:border-hint
-      focus:border-accent focus:shadow-[0_0_0_3px_rgb(37_99_235/.15)] focus:outline-none;
+    @apply w-full rounded-xl border border-line bg-white px-4 py-[15px] text-base leading-normal font-medium text-ink
+      transition-[border-color,box-shadow] duration-300 placeholder:font-normal placeholder:text-hint
+      hover:border-line-strong focus:border-accent focus:shadow-[0_0_0_4px_rgb(31_63_209/.08)] focus:outline-none;
   }
+  .field:focus-visible { outline: none; }
   .field[aria-invalid="true"] { @apply border-error; }
 }
 
+@keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.step-in { animation: step-in .45s cubic-bezier(.2,.7,.2,1) both; }
+
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; scroll-behavior: auto !important; }
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }

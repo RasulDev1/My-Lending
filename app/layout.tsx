@@ -1,15 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
+import "@fontsource-variable/manrope";
 import "./globals.css";
-
-const golos = localFont({
-  src: [
-    { path: "./fonts/golos-text-cyrillic-2.woff2", weight: "400 600" },
-    { path: "./fonts/golos-text-latin-3.woff2", weight: "400 600" },
-  ],
-  variable: "--font-golos",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Автоматизация Бизнеса",
@@ -25,8 +16,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={golos.variable}>
-      <body className="min-h-screen bg-bg font-sans text-[17px] leading-relaxed text-ink">{children}</body>
+    <html lang="ru">
+      <body className="min-h-screen bg-bg font-sans text-[17px] leading-relaxed text-ink antialiased">{children}</body>
     </html>
   );
 }

@@ -32,8 +32,8 @@ export function LogoMark({ className = "" }: { className?: string }) {
 
 export function Logo() {
   return (
-    <a href="./" className="inline-flex items-center gap-3 text-lg font-semibold leading-none tracking-[-0.01em] text-ink no-underline">
-      <LogoMark className="size-9 shrink-0" />
+    <a href="./" className="inline-flex items-center gap-2.5 text-[17px] font-semibold leading-none tracking-[-0.01em] text-ink no-underline">
+      <LogoMark className="size-7 shrink-0" />
       Автоматизация Бизнеса
     </a>
   );
