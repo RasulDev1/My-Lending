@@ -194,7 +194,7 @@ export function QuizForm() {
             </span>
             <input
               id={id} name={id} type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
-              className="field peer pl-12" placeholder={placeholders[id]} aria-invalid={errors[id] ? true : undefined}
+              className="field peer pl-[52px]" placeholder={placeholders[id]} aria-invalid={errors[id] ? true : undefined}
               value={answers[id]} onChange={(ev) => update(id, ev.target.value.replace(/^@+/, ""))}
             />
           </div>
@@ -259,7 +259,7 @@ export function QuizForm() {
           aria-valuemin={0} aria-valuemax={total} aria-valuenow={before + steps[step].length}
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#7a9bff] via-accent to-[#7a5cff] shadow-[0_0_10px_rgb(31_63_209/.5)] transition-[width] duration-700 ease-out"
+            className="h-full rounded-full bg-gradient-to-r from-[#7a9bff] via-accent to-[#7a5cff] shadow-[0_0_10px_rgb(31_63_209/.5)] transition-[width] duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
             style={{ width: `${((before + steps[step].length) / total) * 100}%` }}
           />
         </div>
@@ -281,9 +281,9 @@ export function QuizForm() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="button" onClick={() => goTo(step - 1)}
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-3.5 text-[15px] font-medium leading-none text-faint transition-colors hover:text-ink ${step === 0 ? "invisible" : ""}`}
+              className={`btn-back inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-3.5 text-[15px] font-medium leading-none text-faint hover:text-accent active:text-faint ${step === 0 ? "invisible" : ""}`}
             >
-              <Arrow dir="left" />
+              <span className="nudge"><Arrow dir="left" /></span>
               Назад
             </button>
             <button
@@ -291,7 +291,7 @@ export function QuizForm() {
               className="btn-primary inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-8 py-4 text-base font-semibold leading-none text-white disabled:cursor-progress disabled:opacity-65 max-sm:flex-1"
             >
               {step < last ? "Далее" : status === "sending" ? "Отправляем…" : "Получить разбор"}
-              {step < last && <Arrow />}
+              {step < last && <span className="nudge"><Arrow /></span>}
             </button>
           </div>
           {status === "error" && (

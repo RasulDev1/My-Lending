@@ -17,7 +17,7 @@ export default function Home() {
           <h1 className="mb-7 text-balance font-[family-name:var(--font-display)] text-[clamp(40px,11vw,64px)] font-medium leading-[1.02] tracking-[-0.025em] sm:whitespace-nowrap sm:text-[clamp(64px,7.2vw,92px)]">
             Автоматизация Бизнеса
           </h1>
-          <p className="mx-auto max-w-[30em] text-balance text-[14px] leading-[1.9] tracking-[0.04em] text-faint sm:text-[15px]">
+          <p className="mx-auto max-w-[30em] text-balance text-[14px] leading-[1.9] tracking-[0.04em] text-muted sm:text-[15px]">
             Ответьте на 6 вопросов, чтобы узнать, как увеличить прибыль и уменьшить рутину
           </p>
         </section>
