@@ -6,9 +6,12 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 // После активации можно заменить адрес на секретный код из письма FormSubmit.
 const ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
 
-// Адрес функции Supabase `lead`, которая сохраняет заявку в БД и шлёт её в Telegram-бот (см. папку supabase/).
-// Задаётся при сборке переменной NEXT_PUBLIC_LEAD_ENDPOINT (репозиторная переменная Actions LEAD_ENDPOINT); если она пустая, заявки идут только на почту.
+// Заявки принимает Google Apps Script (так же, как на сайте «Тяга»): записывает в таблицу и шлёт письмо.
+// Код скрипта лежит в apps-script/Code.gs. Адрес веб-приложения задаётся при сборке переменной
+// NEXT_PUBLIC_LEAD_ENDPOINT (репозиторная переменная Actions LEAD_ENDPOINT).
+// Пока она пустая, заявки уходят через запасной сервис FormSubmit на почту.
 const LEAD_ENDPOINT = process.env.NEXT_PUBLIC_LEAD_ENDPOINT ?? "";
+const FALLBACK_ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
 
 type Messenger = "Telegram" | "WhatsApp";
 type FieldId = "sphere" | "instagram" | "channels" | "leads" | "dropoff" | "contact";
@@ -153,48 +156,45 @@ export function QuizForm() {
     const instagram = "@" + answers.instagram.trim().replace(/^@+/, "");
     setStatus("sending");
     const sphere = answers.sphere.trim();
-    const channels = [
-      fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          "Сфера деятельности": sphere,
-          "Instagram": instagram,
-          "Как привлекают клиентов": answers.channels.trim(),
-          "Где оставляют заявку": answers.leads.trim(),
-          "Где останавливаются": answers.dropoff.trim(),
-          "Способ связи": messenger,
-          "Контакт": answers.contact.trim(),
-          _subject: "Новая заявка: " + sphere,
-          _template: "table",
-          _captcha: "false",
-          _honey: honey,
-        }),
-      }).then(async (res) => {
-        const out = await res.json().catch(() => ({}));
-        if (!res.ok || String(out.success) === "false") throw new Error(out.message ?? String(res.status));
-      }),
-    ];
-    if (LEAD_ENDPOINT) {
-      channels.push(
-        fetch(LEAD_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sphere, instagram, messenger, honey,
-            channels: answers.channels.trim(),
-            leads: answers.leads.trim(),
-            dropoff: answers.dropoff.trim(),
-            contact: answers.contact.trim(),
-          }),
-        }).then((res) => { if (!res.ok) throw new Error(String(res.status)); }),
-      );
-    }
+    const lead = {
+      sphere, instagram, messenger, honey,
+      channels: answers.channels.trim(),
+      leads: answers.leads.trim(),
+      dropoff: answers.dropoff.trim(),
+      contact: answers.contact.trim(),
+    };
 
     try {
-      // Заявка принята, если дошла хотя бы одним способом: на почту или в Telegram
-      const results = await Promise.allSettled(channels);
-      if (!results.some((r) => r.status === "fulfilled")) throw new Error("all channels failed");
+      if (LEAD_ENDPOINT) {
+        // text/plain, чтобы браузер не делал предварительный CORS-запрос, который Apps Script не поддерживает
+        const res = await fetch(LEAD_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(lead),
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || !(out.success === true || out.success === "true")) throw new Error(out.message ?? String(res.status));
+      } else {
+        const res = await fetch(FALLBACK_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            "Сфера деятельности": sphere,
+            "Instagram": instagram,
+            "Как привлекают клиентов": lead.channels,
+            "Где оставляют заявку": lead.leads,
+            "Где останавливаются": lead.dropoff,
+            "Способ связи": messenger,
+            "Контакт": lead.contact,
+            _subject: "Новая заявка: " + sphere,
+            _template: "table",
+            _captcha: "false",
+            _honey: honey,
+          }),
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || String(out.success) === "false") throw new Error(out.message ?? String(res.status));
+      }
       setStatus("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {

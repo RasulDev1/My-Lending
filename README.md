@@ -26,26 +26,18 @@ npm run build    # статический сайт в папке out/
 Домен: **landing.sultech.site**. У регистратора домена sultech.site добавлена запись
 `CNAME landing → rasuldev1.github.io`, а в Settings → Pages → Custom domain указан `landing.sultech.site` и включён Enforce HTTPS.
 
-## Заявки в Telegram-бот и база Supabase
+## Заявки: Google Apps Script (как на сайте «Тяга»)
 
-Заявки приходят на почту, в личный Telegram-бот и сохраняются в таблицу `leads` в Supabase. Токен бота нельзя класть в код сайта
-(его увидит любой посетитель), поэтому сайт отправляет заявку в функцию Supabase `lead` (папка `supabase/`), а она сохраняет её и пересылает в бота.
-Токен и ваш chat id лежат в секретах функции. Бот приватный: он ничего не читает, функция пишет только в ваш чат и принимает запросы только с адреса сайта.
-Таблица закрыта политикой безопасности (RLS без политик): через публичный ключ сайта её нельзя ни прочитать, ни изменить.
+Сайт отправляет заявку на веб-приложение Google Apps Script. Скрипт (`apps-script/Code.gs`) записывает её в таблицу Google, шлёт письмо на ddzon4553@gmail.com
+и, если заданы свойства `BOT_TOKEN` и `OWNER_CHAT_ID`, дублирует заявку в личный Telegram-бот. Токен хранится только в свойствах скрипта и не попадает в код сайта.
 
-1. **Бот.** В Telegram откройте `@BotFather`, команда `/newbot`, получите токен вида `123456:ABC...`. Никому его не показывайте и не вставляйте в чат.
-2. **Ваш chat id.** Откройте нового бота и нажмите Start. Затем откройте в браузере
-   `https://api.telegram.org/bot<ТОКЕН>/getUpdates` и найдите `"chat":{"id":123456789`, это ваш id.
-3. **Supabase.** Установите CLI (`npm i -g supabase` или `npx supabase`), затем в корне репозитория:
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref <ref вашего проекта>
-   npx supabase db push                       # создаст таблицу leads
-   npx supabase secrets set BOT_TOKEN=<токен> OWNER_CHAT_ID=<chat id> ALLOWED_ORIGIN=https://landing.sultech.site
-   npx supabase functions deploy lead --no-verify-jwt
-   ```
-   Адрес функции: `https://<ref>.supabase.co/functions/v1/lead`.
-4. **Адрес в сайт.** В репозитории: Settings → Secrets and variables → Actions → вкладка **Variables** → New repository variable:
-   имя `LEAD_ENDPOINT`, значение — адрес функции. Затем перезапустите деплой (Actions → Deploy to GitHub Pages → Run workflow).
+1. Откройте [script.google.com](https://script.google.com) → New project (или в Google Таблице: Расширения → Apps Script, тогда заявки ещё и копятся в таблице).
+2. Вставьте код из `apps-script/Code.gs`, сохраните.
+3. Deploy → New deployment → тип **Web app**. Execute as: **Me**. Who has access: **Anyone**. Нажмите Deploy и подтвердите доступ
+   (Google покажет предупреждение: Advanced → Go to проект → Allow). Скопируйте адрес вида `https://script.google.com/macros/s/.../exec`.
+4. В репозитории: Settings → Secrets and variables → Actions → **Variables** → New repository variable: `LEAD_ENDPOINT` = этот адрес.
+   Затем Actions → Deploy to GitHub Pages → Run workflow.
+5. Telegram (по желанию): в Apps Script Project Settings → Script properties добавьте `BOT_TOKEN` и `OWNER_CHAT_ID`.
 
-Пока переменная `LEAD_ENDPOINT` не задана, заявки приходят только на почту. Если один из каналов не сработал, заявка всё равно считается принятой.
+Пока переменная `LEAD_ENDPOINT` не задана, сайт отправляет заявки на почту через запасной сервис FormSubmit (там нужно один раз нажать Activate в первом письме).
+При изменении кода скрипта нужно заново сделать Deploy → Manage deployments → Edit → New version.
