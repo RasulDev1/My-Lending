@@ -123,6 +123,9 @@ export function QuizForm() {
 
   const goTo = (n: number) => { moved.current = true; setStep(n); };
 
+  // Лёгкая вибрация на телефонах, где она поддерживается (Android). «Назад» вибрации не даёт.
+  const haptic = (ms: number) => { try { navigator.vibrate?.(ms); } catch { /* не поддерживается */ } };
+
   const update = (id: FieldId, value: string) => {
     setAnswers((a) => ({ ...a, [id]: value }));
     if (errors[id]) setErrors((e) => ({ ...e, [id]: undefined }));
@@ -287,7 +290,7 @@ export function QuizForm() {
               Назад
             </button>
             <button
-              type="submit" disabled={status === "sending"}
+              type="submit" disabled={status === "sending"} onClick={() => haptic(12)}
               className="btn-primary inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-8 py-4 text-base font-semibold leading-none text-white disabled:cursor-progress disabled:opacity-65 max-sm:flex-1"
             >
               {step < last ? "Далее" : status === "sending" ? "Отправляем…" : "Получить разбор"}

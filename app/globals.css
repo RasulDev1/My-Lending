@@ -66,11 +66,13 @@ body { -webkit-font-smoothing: antialiased; }
     background: linear-gradient(100deg, transparent, rgb(255 255 255 / .35), transparent);
     transform: skewX(-18deg); transition: left .7s ease;
   }
-  .btn-primary:hover {
-    transform: translateY(-2px); background-position: 100% 100%; filter: brightness(1.06);
-    box-shadow: 0 20px 34px -12px rgb(31 63 209 / .55), 0 3px 8px rgb(31 63 209 / .18), inset 0 1px 0 rgb(255 255 255 / .34);
+  @media (hover: hover) {
+    .btn-primary:hover {
+      transform: translateY(-2px); background-position: 100% 100%; filter: brightness(1.06);
+      box-shadow: 0 20px 34px -12px rgb(31 63 209 / .55), 0 3px 8px rgb(31 63 209 / .18), inset 0 1px 0 rgb(255 255 255 / .34);
+    }
+    .btn-primary:hover::after { left: 120%; }
   }
-  .btn-primary:hover::after { left: 120%; }
   .btn-primary:active {
     transform: translateY(0) scale(.97); filter: brightness(.96);
     box-shadow: 0 3px 8px -2px rgb(18 32 120 / .75), inset 0 2px 4px rgb(10 20 90 / .25);
@@ -82,10 +84,26 @@ body { -webkit-font-smoothing: antialiased; }
   /* Вторичная кнопка «Назад» */
   .btn-back { transition: all .3s var(--ease-press); }
   .btn-back .nudge { display: inline-flex; transition: transform .3s var(--ease-press); }
-  .btn-back:hover { color: var(--color-accent); }
-  .btn-back:hover .nudge { transform: translateX(-4px); }
+  @media (hover: hover) {
+    .btn-back:hover .nudge { transform: translateX(-4px); }
+  }
   .btn-back:active { opacity: .6; transform: scale(.98); transition-duration: .12s; }
   .btn-back:active .nudge { transform: translateX(0); }
+
+  /* Телефон: наведения нет, весь отклик в момент касания. Нажатие быстрое, возврат чуть медленнее. */
+  @media (hover: none) {
+    .btn-primary, .btn-back {
+      transition: transform .2s ease-out, opacity .2s ease-out, box-shadow .2s ease-out, filter .2s ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:active {
+      transform: scale(.95); filter: none;
+      box-shadow: 0 1px 2px rgb(31 63 209 / .25), inset 0 1px 3px rgb(10 20 90 / .2);
+      transition: transform .1s ease-out, box-shadow .1s ease-out;
+    }
+    .btn-primary:active .nudge { transform: none; }
+    .btn-back:active { transform: scale(.96); opacity: .6; transition: transform .1s ease-out, opacity .1s ease-out; }
+  }
 }
 
 @keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
