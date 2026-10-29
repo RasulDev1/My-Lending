@@ -105,6 +105,15 @@ body { -webkit-font-smoothing: antialiased; }
     .btn-primary:active .nudge { transform: translateX(4px); }
     .btn-back:active { transform: scale(.92); opacity: .45; transition: transform .08s ease-out, opacity .08s ease-out; }
   }
+
+  /* Принудительное нажатие: класс ставится из кода на ~130 мс перед сменой шага (и на мыши, и на касании) */
+  .btn-primary.is-active {
+    transform: scale(.95); filter: brightness(.86);
+    box-shadow: 0 2px 4px -1px rgb(31 63 209 / .35), inset 0 3px 8px rgb(8 16 80 / .5);
+    transition: transform .08s ease-out, box-shadow .08s ease-out, filter .08s ease-out;
+  }
+  .btn-primary.is-active .nudge { transform: translateX(4px); }
+  .btn-back.is-active { transform: scale(.95); opacity: .5; transition: transform .08s ease-out, opacity .08s ease-out; }
 }
 
 @keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

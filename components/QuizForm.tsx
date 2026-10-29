@@ -146,11 +146,28 @@ export function QuizForm() {
     return bad.length === 0;
   };
 
-  const next = () => { if (stepIsValid(step)) goTo(step + 1); };
+  // Сначала показываем нажатие кнопки (.is-active), и только через ~130 мс меняем шаг,
+  // чтобы смена слайда не съедала визуальный отклик.
+  const pressing = useRef(false);
+  const pressThen = (btn: HTMLElement | null | undefined, action: () => void) => {
+    if (pressing.current) return;
+    pressing.current = true;
+    btn?.classList.add("is-active");
+    window.setTimeout(() => {
+      pressing.current = false;
+      btn?.classList.remove("is-active");
+      action();
+    }, 130);
+  };
+
+  const next = (btn?: HTMLElement | null) => {
+    if (!stepIsValid(step)) return;
+    pressThen(btn, () => goTo(step + 1));
+  };
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (step < last) { next(); return; }
+    if (step < last) { next(e.nativeEvent instanceof SubmitEvent ? e.nativeEvent.submitter : null); return; }
     if (!stepIsValid(step)) return;
 
     const instagram = "@" + answers.instagram.trim().replace(/^@+/, "");
@@ -310,7 +327,7 @@ export function QuizForm() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <button
-              type="button" onClick={() => goTo(step - 1)}
+              type="button" onClick={(ev) => pressThen(ev.currentTarget, () => goTo(step - 1))}
               className={`btn-back inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-3.5 text-[15px] font-medium leading-none text-faint hover:text-accent active:text-faint ${step === 0 ? "invisible" : ""}`}
             >
               <span className="nudge"><Arrow dir="left" /></span>
