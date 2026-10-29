@@ -74,8 +74,8 @@ function Arrow({ dir = "right" }: { dir?: "left" | "right" }) {
 // Карточка с ультратонкой градиентной рамкой (1px) и многослойной «парящей» тенью
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className="rounded-[18px] bg-[linear-gradient(145deg,#cfd6e6_0%,rgba(255,255,255,.95)_38%,rgba(207,214,230,.35)_70%,rgba(255,255,255,.9)_100%)] p-px shadow-card">
-      <div className={`rounded-[17px] bg-white ${className}`}>{children}</div>
+    <div className="rounded-[22px] bg-[linear-gradient(145deg,rgba(255,255,255,.95)_0%,rgba(255,255,255,.35)_35%,rgba(180,192,225,.35)_70%,rgba(255,255,255,.8)_100%)] p-px shadow-card">
+      <div className={`rounded-[21px] bg-white/60 backdrop-blur-2xl backdrop-saturate-150 ${className}`}>{children}</div>
     </div>
   );
 }
@@ -188,7 +188,7 @@ export function QuizForm() {
     if (id === "instagram") {
       return (
         <Question key={id} label={labels[id]} labelFor={id} error={errors[id]}>
-          <div className="relative">
+          <div className="fw">
             <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-hint transition-colors duration-300 peer-focus:text-accent">
               <InstagramIcon />
             </span>
@@ -213,20 +213,22 @@ export function QuizForm() {
                   onChange={() => { setMessenger(m); document.getElementById("contact")?.focus(); }}
                   className="peer absolute opacity-0"
                 />
-                <span className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-line bg-white px-4 py-[15px] text-[15px] font-medium leading-none text-faint transition-colors duration-300 hover:border-line-strong hover:text-ink peer-checked:border-accent peer-checked:bg-accent-soft peer-checked:text-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-accent">
+                <span className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-transparent bg-[#eef1f8]/80 px-4 py-[15px] text-[15px] font-medium leading-none text-faint transition-colors duration-300 hover:bg-[#e8ecf6] hover:text-ink peer-checked:border-accent/40 peer-checked:bg-white/80 peer-checked:text-accent peer-checked:shadow-[0_6px_16px_-8px_rgb(31_63_209/.45)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-accent">
                   {m === "Telegram" ? <TelegramIcon /> : <WhatsAppIcon />}
                   {m}
                 </span>
               </label>
             ))}
           </div>
-          <input
-            id="contact" name="contact" type="text" autoComplete="off" className="field"
-            inputMode={messenger === "WhatsApp" ? "tel" : "text"}
-            placeholder={contactHint[messenger]} aria-labelledby="contact-label"
-            aria-invalid={errors[id] ? true : undefined}
-            value={answers[id]} onChange={(ev) => update(id, ev.target.value)}
-          />
+          <div className="fw">
+            <input
+              id="contact" name="contact" type="text" autoComplete="off" className="field"
+              inputMode={messenger === "WhatsApp" ? "tel" : "text"}
+              placeholder={contactHint[messenger]} aria-labelledby="contact-label"
+              aria-invalid={errors[id] ? true : undefined}
+              value={answers[id]} onChange={(ev) => update(id, ev.target.value)}
+            />
+          </div>
         </Question>
       );
     }
@@ -238,7 +240,7 @@ export function QuizForm() {
     };
     return (
       <Question key={id} label={labels[id]} labelFor={id} error={errors[id]}>
-        {multiline.includes(id) ? <textarea {...props} /> : <input type="text" {...props} />}
+        <div className="fw">{multiline.includes(id) ? <textarea {...props} /> : <input type="text" {...props} />}</div>
       </Question>
     );
   };
@@ -253,20 +255,13 @@ export function QuizForm() {
     <form noValidate onSubmit={onSubmit} className="flex flex-col gap-10 px-6 pb-8 pt-8 sm:px-14 sm:pb-12 sm:pt-12">
       <div className="flex flex-col gap-4">
         <div
-          className="flex gap-1.5" role="progressbar" aria-label="Прогресс анкеты"
-          aria-valuemin={1} aria-valuemax={total} aria-valuenow={before + 1}
+          className="h-[2px] w-full overflow-hidden rounded-full bg-accent/10" role="progressbar" aria-label="Прогресс анкеты"
+          aria-valuemin={0} aria-valuemax={total} aria-valuenow={before + steps[step].length}
         >
-          {Array.from({ length: total }, (_, i) => {
-            const current = i >= before && i < before + steps[step].length;
-            return (
-              <span
-                key={i}
-                className={`h-[3px] flex-1 rounded-full transition-all duration-500 ${
-                  current ? "bg-accent shadow-[0_0_10px_rgb(31_63_209/.45)]" : i < before ? "bg-accent/35" : "bg-line-strong/60"
-                }`}
-              />
-            );
-          })}
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#7a9bff] via-accent to-[#7a5cff] shadow-[0_0_10px_rgb(31_63_209/.5)] transition-[width] duration-700 ease-out"
+            style={{ width: `${((before + steps[step].length) / total) * 100}%` }}
+          />
         </div>
         <p className="m-0 text-[13px] font-medium uppercase tabular-nums tracking-[0.14em] text-faint">
           {counter} из {total}
@@ -293,7 +288,7 @@ export function QuizForm() {
             </button>
             <button
               type="submit" disabled={status === "sending"}
-              className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-accent px-7 py-4 text-base font-semibold leading-none text-white transition-colors duration-300 hover:bg-accent-deep disabled:cursor-progress disabled:opacity-65 max-sm:flex-1"
+              className="btn-primary inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-8 py-4 text-base font-semibold leading-none text-white disabled:cursor-progress disabled:opacity-65 max-sm:flex-1"
             >
               {step < last ? "Далее" : status === "sending" ? "Отправляем…" : "Получить разбор"}
               {step < last && <Arrow />}

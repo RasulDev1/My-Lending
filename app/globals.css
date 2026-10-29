@@ -8,34 +8,69 @@
   --color-ink: #0e1626;
   --color-muted: #566074;
   --color-faint: #7b8597;
-  --color-hint: #b3bac7;
+  --color-hint: #9aa4b8;
   --color-accent: #1f3fd1;
   --color-accent-deep: #172fa3;
   --color-accent-soft: #f1f4fd;
   --color-accent-line: #cfd8f7;
   --color-error: #c8372d;
+  --font-display: "Playfair Display Variable", "Georgia", "Times New Roman", serif;
   --font-sans: "Manrope Variable", "Segoe UI", system-ui, sans-serif;
   --shadow-card: 0 1px 1px rgb(14 22 38 / .03), 0 4px 8px -2px rgb(14 22 38 / .04), 0 16px 32px -8px rgb(14 22 38 / .06), 0 40px 80px -24px rgb(14 22 38 / .10), 0 90px 140px -50px rgb(31 63 209 / .16);
   --shadow-sheet: 0 1px 2px rgb(14 22 38 / .03), 0 24px 48px -28px rgb(14 22 38 / .14);
 }
 
-html { background: linear-gradient(180deg, #e9edf6 0%, #f4f6fb 38%, #fafbfd 100%) fixed #f6f7fb; accent-color: var(--color-accent); caret-color: var(--color-accent); }
+html { background: #eef1f8; accent-color: var(--color-accent); caret-color: var(--color-accent); }
 body { -webkit-font-smoothing: antialiased; }
 ::selection { background: #d5ddf8; color: var(--color-ink); }
 :focus-visible:not(.field) { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 10px; }
 
 @layer components {
+  /* Поле: мягкая заливка без рамки, снизу тонкая линия, которая «заливается» при фокусе */
   .field {
-    @apply w-full rounded-xl border border-line bg-white px-4 py-[15px] text-base leading-normal font-medium text-ink
-      transition-[border-color,box-shadow] duration-300 placeholder:font-normal placeholder:text-hint
-      hover:border-line-strong focus:border-accent focus:shadow-[0_0_0_4px_rgb(31_63_209/.08),inset_0_0_16px_rgb(31_63_209/.07)] focus:outline-none;
+    @apply w-full rounded-xl border border-transparent bg-[#e6ebf6]/90 px-4 py-[15px] text-base leading-normal font-medium text-ink
+      transition-[background-color,border-color] duration-300 placeholder:font-normal placeholder:text-hint
+      hover:bg-[#e0e6f4] focus:bg-white/85 focus:outline-none;
   }
   .field:focus-visible { outline: none; }
-  .field[aria-invalid="true"] { @apply border-error; }
+  .fw { position: relative; }
+  .fw::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, #5b7cff, #1f3fd1 55%, #7a5cff);
+    box-shadow: 0 0 12px rgb(31 63 209 / .45);
+    transform: scaleX(0); transform-origin: left; opacity: 0;
+    transition: transform .5s cubic-bezier(.2,.7,.2,1), opacity .3s;
+  }
+  .fw:focus-within::after { transform: scaleX(1); opacity: 1; }
+  .fw:has([aria-invalid="true"])::after { transform: scaleX(1); opacity: 1; background: var(--color-error); box-shadow: none; }
+
+  /* Главная кнопка: градиент, цветная глубокая тень и блик */
+  .btn-primary {
+    position: relative; overflow: hidden; isolation: isolate;
+    background: linear-gradient(135deg, #3b5df5 0%, #1f3fd1 55%, #1a2fa0 100%);
+    box-shadow: 0 12px 28px -10px rgb(31 63 209 / .65), 0 2px 6px rgb(31 63 209 / .25), inset 0 1px 0 rgb(255 255 255 / .28);
+    transition: transform .3s, box-shadow .3s, filter .3s;
+  }
+  .btn-primary::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgb(255 255 255 / .18), transparent 55%);
+  }
+  .btn-primary::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; z-index: -1;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255 / .35), transparent);
+    transform: skewX(-18deg); transition: left .7s ease;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 18px 34px -10px rgb(31 63 209 / .7), 0 2px 6px rgb(31 63 209 / .25), inset 0 1px 0 rgb(255 255 255 / .3); }
+  .btn-primary:hover::after { left: 120%; }
+  .btn-primary:active { transform: translateY(0); }
 }
 
 @keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .step-in { animation: step-in .45s cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes drift-a { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(60px,40px,0) scale(1.12); } }
+@keyframes drift-b { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-70px,30px,0) scale(1.08); } }
+@keyframes drift-c { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(40px,-50px,0) scale(1.15); } }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
