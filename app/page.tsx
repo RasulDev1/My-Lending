@@ -1,3 +1,4 @@
+import { Backdrop } from "@/components/Backdrop";
 import { Logo } from "@/components/Logo";
 import { QuizForm } from "@/components/QuizForm";
 
@@ -6,6 +7,7 @@ const gutter = "mx-auto max-w-[680px] pl-[max(20px,env(safe-area-inset-left))] p
 export default function Home() {
   return (
     <>
+      <Backdrop />
       <header className={`${gutter} flex justify-center py-6 sm:py-8`}>
         <Logo />
       </header>

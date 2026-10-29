@@ -71,6 +71,25 @@ function Arrow({ dir = "right" }: { dir?: "left" | "right" }) {
   );
 }
 
+// Карточка с ультратонкой градиентной рамкой (1px) и многослойной «парящей» тенью
+function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className="rounded-[18px] bg-[linear-gradient(145deg,#cfd6e6_0%,rgba(255,255,255,.95)_38%,rgba(207,214,230,.35)_70%,rgba(255,255,255,.9)_100%)] p-px shadow-card">
+      <div className={`rounded-[17px] bg-white ${className}`}>{children}</div>
+    </div>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+      <circle cx="12" cy="12" r="3.8" />
+      <circle cx="17.2" cy="6.8" r=".6" fill="currentColor" />
+    </svg>
+  );
+}
+
 function Question({ label, labelFor, labelId, error, children }: {
   label: string; labelFor?: string; labelId?: string; error?: string; children: ReactNode;
 }) {
@@ -153,17 +172,15 @@ export function QuizForm() {
     }
   }
 
-  const sheet = "rounded-2xl border border-line bg-white shadow-sheet";
-
   if (status === "done") {
     return (
-      <div className={`${sheet} step-in flex flex-col items-center gap-4 px-8 py-16 text-center sm:py-20`}>
+      <Card className="step-in flex flex-col items-center gap-4 px-8 py-16 text-center sm:py-20">
         <span aria-hidden="true" className="grid size-14 place-items-center rounded-full bg-accent-soft text-accent">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
         </span>
         <h2 className="m-0 text-[30px] font-semibold leading-[1.15] tracking-[-0.03em]">Спасибо, ответы получены</h2>
         <p className="m-0 max-w-[26em] text-muted">Скоро напишу вам в {messenger} и расскажу, что можно автоматизировать в вашем бизнесе.</p>
-      </div>
+      </Card>
     );
   }
 
@@ -172,10 +189,12 @@ export function QuizForm() {
       return (
         <Question key={id} label={labels[id]} labelFor={id} error={errors[id]}>
           <div className="relative">
-            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-medium text-faint">@</span>
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-hint transition-colors duration-300 peer-focus:text-accent">
+              <InstagramIcon />
+            </span>
             <input
               id={id} name={id} type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
-              className="field pl-9" placeholder={placeholders[id]} aria-invalid={errors[id] ? true : undefined}
+              className="field peer pl-12" placeholder={placeholders[id]} aria-invalid={errors[id] ? true : undefined}
               value={answers[id]} onChange={(ev) => update(id, ev.target.value.replace(/^@+/, ""))}
             />
           </div>
@@ -224,19 +243,35 @@ export function QuizForm() {
     );
   };
 
-  return (
-    <form noValidate onSubmit={onSubmit} className={`${sheet} overflow-hidden`}>
-      <div
-        className="h-1 bg-line" role="progressbar" aria-label="Прогресс анкеты"
-        aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={step + 1}
-      >
-        <div className="h-full rounded-r-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
-      </div>
+  // Вопросы, которые показывает текущий шаг: у первого шага это 1–2 из 6
+  const before = steps.slice(0, step).reduce((n, g) => n + g.length, 0);
+  const total = steps.reduce((n, g) => n + g.length, 0);
+  const counter = steps[step].length > 1 ? `Вопросы ${before + 1}–${before + steps[step].length}` : `Вопрос ${before + 1}`;
 
-      <div className="flex flex-col gap-10 px-6 pb-8 pt-8 sm:px-14 sm:pb-12 sm:pt-12">
+  return (
+    <Card>
+    <form noValidate onSubmit={onSubmit} className="flex flex-col gap-10 px-6 pb-8 pt-8 sm:px-14 sm:pb-12 sm:pt-12">
+      <div className="flex flex-col gap-4">
+        <div
+          className="flex gap-1.5" role="progressbar" aria-label="Прогресс анкеты"
+          aria-valuemin={1} aria-valuemax={total} aria-valuenow={before + 1}
+        >
+          {Array.from({ length: total }, (_, i) => {
+            const current = i >= before && i < before + steps[step].length;
+            return (
+              <span
+                key={i}
+                className={`h-[3px] flex-1 rounded-full transition-all duration-500 ${
+                  current ? "bg-accent shadow-[0_0_10px_rgb(31_63_209/.45)]" : i < before ? "bg-accent/35" : "bg-line-strong/60"
+                }`}
+              />
+            );
+          })}
+        </div>
         <p className="m-0 text-[13px] font-medium uppercase tabular-nums tracking-[0.14em] text-faint">
-          Шаг {step + 1} из {steps.length}
+          {counter} из {total}
         </p>
+      </div>
 
         <div key={step} className="step-in flex flex-col gap-10">
           {steps[step].map(renderField)}
@@ -273,7 +308,7 @@ export function QuizForm() {
             </p>
           )}
         </div>
-      </div>
     </form>
+    </Card>
   );
 }

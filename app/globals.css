@@ -15,19 +15,20 @@
   --color-accent-line: #cfd8f7;
   --color-error: #c8372d;
   --font-sans: "Manrope Variable", "Segoe UI", system-ui, sans-serif;
+  --shadow-card: 0 1px 1px rgb(14 22 38 / .03), 0 4px 8px -2px rgb(14 22 38 / .04), 0 16px 32px -8px rgb(14 22 38 / .06), 0 40px 80px -24px rgb(14 22 38 / .10), 0 90px 140px -50px rgb(31 63 209 / .16);
   --shadow-sheet: 0 1px 2px rgb(14 22 38 / .03), 0 24px 48px -28px rgb(14 22 38 / .14);
 }
 
-html { background: var(--color-bg); accent-color: var(--color-accent); caret-color: var(--color-accent); }
+html { background: linear-gradient(180deg, #e9edf6 0%, #f4f6fb 38%, #fafbfd 100%) fixed #f6f7fb; accent-color: var(--color-accent); caret-color: var(--color-accent); }
 body { -webkit-font-smoothing: antialiased; }
 ::selection { background: #d5ddf8; color: var(--color-ink); }
-:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 10px; }
+:focus-visible:not(.field) { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 10px; }
 
 @layer components {
   .field {
     @apply w-full rounded-xl border border-line bg-white px-4 py-[15px] text-base leading-normal font-medium text-ink
       transition-[border-color,box-shadow] duration-300 placeholder:font-normal placeholder:text-hint
-      hover:border-line-strong focus:border-accent focus:shadow-[0_0_0_4px_rgb(31_63_209/.08)] focus:outline-none;
+      hover:border-line-strong focus:border-accent focus:shadow-[0_0_0_4px_rgb(31_63_209/.08),inset_0_0_16px_rgb(31_63_209/.07)] focus:outline-none;
   }
   .field:focus-visible { outline: none; }
   .field[aria-invalid="true"] { @apply border-error; }
