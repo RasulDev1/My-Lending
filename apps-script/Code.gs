@@ -1,101 +1,88 @@
-// Google Apps Script: принимает заявку с сайта, записывает её в таблицу и отправляет письмо владельцу.
-// Так же устроен приём заявок на сайте «Тяга»: сайт отправляет POST на адрес веб-приложения Apps Script.
+// Скрипт принимает заявки с сайта-анкеты «Автоматизация Бизнеса» и присылает каждую письмом на почту. Таблица не нужна.
+// Устроен так же, как скрипт сайта «Тяга»: создайте проект на script.google.com, вставьте этот код и разверните как «Веб-приложение».
 //
 // Необязательно: если в «Свойствах скрипта» (Project Settings → Script properties) заданы
 // BOT_TOKEN и OWNER_CHAT_ID, заявка дополнительно уходит в личный Telegram-бот.
 
-const OWNER_EMAIL = 'ddzon4553@gmail.com';
-const SHEET_NAME = 'Заявки';
+var EMAIL = 'ddzon4553@gmail.com'; // куда присылать заявки
 
-const FIELDS = [
+// [ключ в запросе сайта, подпись в письме]
+var FIELDS = [
   ['sphere', 'Сфера деятельности'],
   ['instagram', 'Instagram'],
   ['channels', 'Как привлекают клиентов'],
   ['leads', 'Где оставляют заявку'],
   ['dropoff', 'Где останавливаются'],
   ['messenger', 'Способ связи'],
-  ['contact', 'Контакт'],
+  ['contact', 'Контакт']
 ];
-const MAX_LEN = 1000;
+var MAX_LEN = 1000;
 
 function doPost(e) {
-  const lock = LockService.getScriptLock();
   try {
-    lock.waitLock(20000);
-    const data = JSON.parse(e.postData.contents);
-
+    var data = JSON.parse(e.postData.contents);
     // Ловушка для ботов: настоящий человек это поле не заполняет
-    if (data.honey) return reply_({ success: true });
+    if (data.honey) return json({ success: true });
 
-    const values = FIELDS.map(([key, label]) => {
-      const v = String(data[key] == null ? '' : data[key]).trim().slice(0, MAX_LEN);
-      if (!v) throw new Error('Не заполнено поле: ' + label);
+    var values = FIELDS.map(function (f) {
+      var v = String(data[f[0]] == null ? '' : data[f[0]]).trim().slice(0, MAX_LEN);
+      if (!v) throw new Error('Не заполнено поле: ' + f[1]);
       return v;
     });
-
-    saveToSheet_(values);
-    sendEmail_(values);
-    sendTelegram_(values); // не мешает заявке, если Telegram не настроен или недоступен
-
-    return reply_({ success: true });
+    sendMail(values);
+    sendTelegram(values); // не мешает заявке, если Telegram не настроен или недоступен
+    return json({ success: true });
   } catch (err) {
-    return reply_({ success: false, message: String(err && err.message || err) });
-  } finally {
-    lock.releaseLock();
+    return json({ success: false, message: String(err) });
   }
 }
 
-// Открытие адреса в браузере показывает, что скрипт жив
-function doGet() {
-  return reply_({ ok: true });
+function esc(v) {
+  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function saveToSheet_(values) {
-  const book = SpreadsheetApp.getActiveSpreadsheet();
-  if (!book) return; // скрипт не привязан к таблице, заявки идут только на почту
-  let sheet = book.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = book.insertSheet(SHEET_NAME);
-    sheet.appendRow(['Дата'].concat(FIELDS.map((f) => f[1])));
-    sheet.setFrozenRows(1);
-  }
-  sheet.appendRow([new Date()].concat(values));
-}
-
-function sendEmail_(values) {
-  const rows = FIELDS.map((f, i) =>
-    '<tr><td style="padding:6px 14px 6px 0;color:#566074">' + esc_(f[1]) + '</td><td style="padding:6px 0"><b>' + esc_(values[i]) + '</b></td></tr>'
-  ).join('');
+function sendMail(values) {
+  var rows = FIELDS.map(function (f, i) {
+    return '<tr><td style="padding:6px 12px;border:1px solid #ddd;color:#555">' + esc(f[1]) + '</td>' +
+           '<td style="padding:6px 12px;border:1px solid #ddd"><b>' + esc(values[i]) + '</b></td></tr>';
+  }).join('');
   MailApp.sendEmail({
-    to: OWNER_EMAIL,
+    to: EMAIL,
     subject: 'Новая заявка: ' + values[0],
-    name: 'Автоматизация Бизнеса',
-    htmlBody: '<h3 style="margin:0 0 12px">Новая заявка с сайта</h3><table style="font:15px/1.5 Arial,sans-serif">' + rows + '</table>',
+    htmlBody: '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px">' + rows + '</table>',
+    name: 'Автоматизация Бизнеса'
   });
 }
 
-function sendTelegram_(values) {
-  const props = PropertiesService.getScriptProperties();
-  const token = props.getProperty('BOT_TOKEN');
-  const chatId = props.getProperty('OWNER_CHAT_ID');
+function sendTelegram(values) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty('BOT_TOKEN');
+  var chatId = props.getProperty('OWNER_CHAT_ID');
   if (!token || !chatId) return;
   try {
-    const text = '🆕 <b>Новая заявка</b>\n\n' + FIELDS.map((f, i) => '<b>' + f[1] + ':</b> ' + esc_(values[i])).join('\n');
+    var text = '🆕 <b>Новая заявка</b>\n\n' + FIELDS.map(function (f, i) {
+      return '<b>' + f[1] + ':</b> ' + esc(values[i]);
+    }).join('\n');
     UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML', disable_web_page_preview: true }),
-      muteHttpExceptions: true,
+      muteHttpExceptions: true
     });
   } catch (err) {
     console.error('Telegram: ' + err);
   }
 }
 
-function esc_(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// Запустите эту функцию один раз в редакторе: Google попросит разрешение на отправку почты и пришлёт тестовое письмо.
+function testEmail() {
+  sendMail(['Тест', '@test', 'проверка', 'проверка', 'проверка', 'Telegram', '@test']);
 }
 
-function reply_(obj) {
+function doGet() {
+  return json({ success: true, message: 'Скрипт заявок работает' });
+}
+
+function json(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
