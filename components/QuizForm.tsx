@@ -22,7 +22,7 @@ const contactHint: Record<Messenger, string> = {
   WhatsApp: "Номер WhatsApp, например +7 900 123-45-67",
 };
 
-const emptyAnswers: Answers = { sphere: "", channels: "", leads: "", dropoff: "", contact: "", instagram: "" };
+const emptyAnswers: Answers = { sphere: "", instagram: "", channels: "", leads: "", dropoff: "", contact: "" };
 
 function TelegramIcon() {
   return (
@@ -95,12 +95,12 @@ export function QuizForm() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           "Сфера деятельности": answers.sphere.trim(),
+          "Instagram": instagram,
           "Как привлекают клиентов": answers.channels.trim(),
           "Где оставляют заявку": answers.leads.trim(),
           "Где останавливаются": answers.dropoff.trim(),
           "Способ связи": messenger,
           "Контакт": answers.contact.trim(),
-          "Instagram": instagram,
           _subject: "Новая заявка: " + answers.sphere.trim(),
           _template: "table",
           _captcha: "false",
@@ -115,6 +115,23 @@ export function QuizForm() {
       setStatus("error");
     }
   }
+
+  const renderText = (q: (typeof textQuestions)[number], num: number) => {
+    const props = {
+      id: q.id,
+      name: q.id,
+      className: `field${q.multiline ? " min-h-[92px] resize-y" : ""}`,
+      placeholder: q.placeholder,
+      value: answers[q.id],
+      "aria-invalid": errors[q.id] ? true : undefined,
+      onChange: (ev: { target: { value: string } }) => update(q.id, ev.target.value),
+    };
+    return (
+      <Question key={q.id} num={num} label={q.label} labelFor={q.id} error={errors[q.id]}>
+        {q.multiline ? <textarea {...props} /> : <input type="text" {...props} />}
+      </Question>
+    );
+  };
 
   const sheet = "rounded-xl border border-line bg-white shadow-sheet";
 
@@ -132,24 +149,23 @@ export function QuizForm() {
 
   return (
     <form noValidate onSubmit={onSubmit} className={`${sheet} flex flex-col`}>
-      {textQuestions.map((q, i) => {
-        const props = {
-          id: q.id,
-          name: q.id,
-          className: `field${q.multiline ? " min-h-[92px] resize-y" : ""}`,
-          placeholder: q.placeholder,
-          value: answers[q.id],
-          "aria-invalid": errors[q.id] ? true : undefined,
-          onChange: (ev: { target: { value: string } }) => update(q.id, ev.target.value),
-        };
-        return (
-          <Question key={q.id} num={i + 1} label={q.label} labelFor={q.id} error={errors[q.id]}>
-            {q.multiline ? <textarea {...props} /> : <input type="text" {...props} />}
-          </Question>
-        );
-      })}
+      {renderText(textQuestions[0], 1)}
 
-      <Question num={5} label="Укажите способ связи" labelId="contact-label" error={errors.contact}>
+      <Question num={2} label="Укажите ваш логин в Instagram" labelFor="instagram" error={errors.instagram}>
+        <div className="relative">
+          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-[15px] flex items-center text-muted">@</span>
+          <input
+            id="instagram" name="instagram" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
+            className="field pl-8" placeholder="username"
+            aria-invalid={errors.instagram ? true : undefined}
+            value={answers.instagram} onChange={(ev) => update("instagram", ev.target.value.replace(/^@+/, ""))}
+          />
+        </div>
+      </Question>
+
+      {textQuestions.slice(1).map((q, i) => renderText(q, i + 3))}
+
+      <Question num={6} label="Укажите способ связи" labelId="contact-label" error={errors.contact}>
         <div role="radiogroup" aria-labelledby="contact-label" className="grid grid-cols-2 gap-2.5">
           {(["Telegram", "WhatsApp"] as const).map((m) => (
             <label key={m} className="relative">
@@ -172,18 +188,6 @@ export function QuizForm() {
           aria-invalid={errors.contact ? true : undefined}
           value={answers.contact} onChange={(ev) => update("contact", ev.target.value)}
         />
-      </Question>
-
-      <Question num={6} label="Укажите ваш логин в Instagram" labelFor="instagram" error={errors.instagram}>
-        <div className="relative">
-          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-[15px] flex items-center text-muted">@</span>
-          <input
-            id="instagram" name="instagram" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
-            className="field pl-8" placeholder="username"
-            aria-invalid={errors.instagram ? true : undefined}
-            value={answers.instagram} onChange={(ev) => update("instagram", ev.target.value.replace(/^@+/, ""))}
-          />
-        </div>
       </Question>
 
       <input

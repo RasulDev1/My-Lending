@@ -1,6 +1,6 @@
 # Автоматизация Бизнеса — анкета
 
-Одна страница с 6 вопросами. Ответы приходят на почту ddzon4553@gmail.com через [FormSubmit](https://formsubmit.co).
+Одна страница с 6 вопросами (Instagram — вторым). Ответы приходят на почту ddzon4553@gmail.com через [FormSubmit](https://formsubmit.co).
 
 Стек: Next.js (App Router, статический экспорт), Tailwind CSS 4, TypeScript.
 
