@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Цвета и шрифт взяты с основного сайта «Автоматизация Бизнеса» */
+@theme {
+  --color-bg: #f4f6f9;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-ink: #0f172a;
+  --color-muted: #475569;
+  --color-faint: #5b6b80;
+  --color-hint: #94a3b8;
+  --color-accent: #2563eb;
+  --color-accent-soft: #eff4ff;
+  --color-accent-line: #c7d7fb;
+  --color-cta: #f97316;
+  --color-cta-hover: #ea580c;
+  --color-error: #dc2626;
+  --font-sans: var(--font-golos), "Segoe UI", system-ui, sans-serif;
+  --shadow-sheet: 0 1px 2px rgb(15 23 42 / .04), 0 8px 24px -12px rgb(15 23 42 / .12);
+}
+
+html { background: var(--color-bg); accent-color: var(--color-accent); caret-color: var(--color-accent); }
+body { -webkit-font-smoothing: antialiased; }
+::selection { background: #cddcfd; color: var(--color-ink); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 8px; }
+
+@layer components {
+  .field {
+    @apply w-full rounded-lg border border-line-strong bg-white px-[15px] py-[13px] text-base leading-normal text-ink
+      transition-[border-color,box-shadow] duration-200 placeholder:text-hint hover:border-hint
+      focus:border-accent focus:shadow-[0_0_0_3px_rgb(37_99_235/.15)] focus:outline-none;
+  }
+  .field[aria-invalid="true"] { @apply border-error; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}
