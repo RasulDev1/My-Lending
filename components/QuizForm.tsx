@@ -6,6 +6,10 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 // После активации можно заменить адрес на секретный код из письма FormSubmit.
 const ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
 
+// Адрес Cloudflare Worker, который пересылает заявку в Telegram-бот (см. папку worker/).
+// Задаётся при сборке переменной NEXT_PUBLIC_TG_ENDPOINT; если она пустая, заявки идут только на почту.
+const TG_ENDPOINT = process.env.NEXT_PUBLIC_TG_ENDPOINT ?? "";
+
 type Messenger = "Telegram" | "WhatsApp";
 type FieldId = "sphere" | "instagram" | "channels" | "leads" | "dropoff" | "contact";
 type Answers = Record<FieldId, string>;
@@ -148,26 +152,49 @@ export function QuizForm() {
 
     const instagram = "@" + answers.instagram.trim().replace(/^@+/, "");
     setStatus("sending");
-    try {
-      const res = await fetch(ENDPOINT, {
+    const sphere = answers.sphere.trim();
+    const channels = [
+      fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          "Сфера деятельности": answers.sphere.trim(),
+          "Сфера деятельности": sphere,
           "Instagram": instagram,
           "Как привлекают клиентов": answers.channels.trim(),
           "Где оставляют заявку": answers.leads.trim(),
           "Где останавливаются": answers.dropoff.trim(),
           "Способ связи": messenger,
           "Контакт": answers.contact.trim(),
-          _subject: "Новая заявка: " + answers.sphere.trim(),
+          _subject: "Новая заявка: " + sphere,
           _template: "table",
           _captcha: "false",
           _honey: honey,
         }),
-      });
-      const out = await res.json().catch(() => ({}));
-      if (!res.ok || String(out.success) === "false") throw new Error(out.message ?? String(res.status));
+      }).then(async (res) => {
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || String(out.success) === "false") throw new Error(out.message ?? String(res.status));
+      }),
+    ];
+    if (TG_ENDPOINT) {
+      channels.push(
+        fetch(TG_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sphere, instagram, messenger, honey,
+            channels: answers.channels.trim(),
+            leads: answers.leads.trim(),
+            dropoff: answers.dropoff.trim(),
+            contact: answers.contact.trim(),
+          }),
+        }).then((res) => { if (!res.ok) throw new Error(String(res.status)); }),
+      );
+    }
+
+    try {
+      // Заявка принята, если дошла хотя бы одним способом: на почту или в Telegram
+      const results = await Promise.allSettled(channels);
+      if (!results.some((r) => r.status === "fulfilled")) throw new Error("all channels failed");
       setStatus("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {

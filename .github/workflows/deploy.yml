@@ -29,6 +29,9 @@ jobs:
       #   env:
       #     NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
       - run: npm run build
+        env:
+          # Адрес Worker для Telegram-бота: Settings → Secrets and variables → Actions → Variables → TG_ENDPOINT
+          NEXT_PUBLIC_TG_ENDPOINT: ${{ vars.TG_ENDPOINT }}
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
