@@ -93,16 +93,17 @@ body { -webkit-font-smoothing: antialiased; }
   /* Телефон: наведения нет, весь отклик в момент касания. Нажатие быстрое, возврат чуть медленнее. */
   @media (hover: none) {
     .btn-primary, .btn-back {
-      transition: transform .2s ease-out, opacity .2s ease-out, box-shadow .2s ease-out, filter .2s ease-out;
+      transition: transform .38s var(--ease-press), opacity .38s ease-out, box-shadow .38s ease-out, filter .38s ease-out;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .btn-primary:active {
-      transform: scale(.95); filter: none;
-      box-shadow: 0 1px 2px rgb(31 63 209 / .25), inset 0 1px 3px rgb(10 20 90 / .2);
-      transition: transform .1s ease-out, box-shadow .1s ease-out;
+      transform: translateY(2px) scale(.92); filter: brightness(.82) saturate(1.1);
+      box-shadow: 0 0 0 4px rgb(31 63 209 / .22), 0 1px 2px rgb(31 63 209 / .3), inset 0 3px 8px rgb(8 16 80 / .55);
+      transition: transform .08s ease-out, box-shadow .08s ease-out, filter .08s ease-out;
     }
-    .btn-primary:active .nudge { transform: none; }
-    .btn-back:active { transform: scale(.96); opacity: .6; transition: transform .1s ease-out, opacity .1s ease-out; }
+    .btn-primary:active .nudge { transform: translateX(4px); }
+    .btn-back:active { transform: scale(.92); opacity: .45; transition: transform .08s ease-out, opacity .08s ease-out; }
   }
 }
 
