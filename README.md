@@ -23,5 +23,5 @@ npm run build    # статический сайт в папке out/
 При пуше в `main` workflow `.github/workflows/deploy.yml` собирает сайт и публикует его на GitHub Pages.
 В настройках репозитория: Settings → Pages → Source → **GitHub Actions**.
 
-Домен: **anketa.sultech.site**. У регистратора домена sultech.site добавлена запись
-`CNAME anketa → rasuldev1.github.io`, а в Settings → Pages → Custom domain указан `anketa.sultech.site` и включён Enforce HTTPS.
+Домен: **landing.sultech.site**. У регистратора домена sultech.site добавлена запись
+`CNAME landing → rasuldev1.github.io`, а в Settings → Pages → Custom domain указан `landing.sultech.site` и включён Enforce HTTPS.

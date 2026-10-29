@@ -24,7 +24,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Сайт открывается на своём домене anketa.sultech.site, поэтому basePath не нужен.
+      # Сайт открывается на своём домене landing.sultech.site, поэтому basePath не нужен.
       # Без домена (адрес rasuldev1.github.io/My-Lending) верните:
       #   env:
       #     NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
