@@ -16,7 +16,7 @@ export default function Home() {
             Автоматизация Бизнеса
           </h1>
           <p className="mx-auto max-w-[30em] text-balance text-[16.5px] text-muted sm:text-lg">
-            Ответь на вопросы, чтобы узнать, как увеличить прибыль и уменьшить рутину
+            Ответьте на 6 вопросов, чтобы узнать, как увеличить прибыль и уменьшить рутину
           </p>
         </section>
 

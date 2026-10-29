@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 // Заявки уходят на почту через FormSubmit (formsubmit.co).
 // После активации можно заменить адрес на секретный код из письма FormSubmit.
@@ -24,6 +24,15 @@ const contactHint: Record<Messenger, string> = {
 
 const emptyAnswers: Answers = { sphere: "", instagram: "", channels: "", leads: "", dropoff: "", contact: "" };
 
+// Порядок вопросов. На телефоне анкета показывает их по одному.
+const order: FieldId[] = ["sphere", "instagram", "channels", "leads", "dropoff", "contact"];
+const isPhone = () => window.matchMedia("(max-width: 639px)").matches;
+
+const errorText = (id: FieldId) =>
+  id === "contact" ? "Укажите контакт, чтобы мы могли ответить"
+    : id === "instagram" ? "Укажите логин Instagram"
+    : "Ответьте на этот вопрос";
+
 function TelegramIcon() {
   return (
     <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true">
@@ -40,12 +49,12 @@ function WhatsAppIcon() {
   );
 }
 
-function Question({ num, label, labelFor, labelId, error, children }: {
-  num: number; label: string; labelFor?: string; labelId?: string; error?: string; children: ReactNode;
+function Question({ num, label, labelFor, labelId, error, current, children }: {
+  num: number; label: string; labelFor?: string; labelId?: string; error?: string; current: boolean; children: ReactNode;
 }) {
   const labelClass = "pt-[3px] text-lg font-semibold leading-[1.3] tracking-[-0.01em] sm:pt-[5px] sm:text-[19px]";
   return (
-    <div className="grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 gap-y-3 border-b border-line px-[18px] py-6 sm:grid-cols-[44px_minmax(0,1fr)] sm:gap-x-4 sm:px-8 sm:py-7">
+    <div className={`${current ? "" : "max-sm:hidden"} grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 gap-y-3 px-[18px] pb-2 pt-5 sm:border-b sm:border-line sm:grid-cols-[44px_minmax(0,1fr)] sm:gap-x-4 sm:px-8 sm:py-7`}>
       <span aria-hidden="true" className="grid size-8 place-items-center rounded-lg border border-accent-line bg-accent-soft text-sm font-semibold tabular-nums text-accent sm:size-9 sm:text-[15px]">
         {num}
       </span>
@@ -66,6 +75,26 @@ export function QuizForm() {
   const [errors, setErrors] = useState<Partial<Record<FieldId, string>>>({});
   const [honey, setHoney] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "done">("idle");
+  const [step, setStep] = useState(0);
+  const moved = useRef(false);
+
+  // После перехода к другому вопросу ставим курсор в его поле
+  useEffect(() => {
+    if (!moved.current) return;
+    document.getElementById(order[step])?.focus({ preventScroll: true });
+  }, [step]);
+
+  const goTo = (next: number) => { moved.current = true; setStep(next); };
+
+  const next = () => {
+    const id = order[step];
+    if (!answers[id].trim()) {
+      setErrors((e) => ({ ...e, [id]: errorText(id) }));
+      document.getElementById(id)?.focus();
+      return;
+    }
+    goTo(step + 1);
+  };
 
   const update = (id: FieldId, value: string) => {
     setAnswers((a) => ({ ...a, [id]: value }));
@@ -75,17 +104,18 @@ export function QuizForm() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
+    // Enter на телефоне до последнего вопроса работает как «Далее»
+    if (isPhone() && step < order.length - 1) { next(); return; }
+
     const found: Partial<Record<FieldId, string>> = {};
-    (Object.keys(answers) as FieldId[]).forEach((id) => {
-      if (!answers[id].trim()) {
-        found[id] = id === "contact" ? "Укажите контакт, чтобы мы могли ответить"
-          : id === "instagram" ? "Укажите логин Instagram"
-          : "Ответьте на этот вопрос";
-      }
-    });
+    order.forEach((id) => { if (!answers[id].trim()) found[id] = errorText(id); });
     setErrors(found);
-    const firstInvalid = (Object.keys(found) as FieldId[])[0];
-    if (firstInvalid) { document.getElementById(firstInvalid)?.focus(); return; }
+    const firstInvalid = order.find((id) => found[id]);
+    if (firstInvalid) {
+      if (isPhone()) goTo(order.indexOf(firstInvalid));
+      else document.getElementById(firstInvalid)?.focus();
+      return;
+    }
 
     const instagram = "@" + answers.instagram.trim().replace(/^@+/, "");
     setStatus("sending");
@@ -127,7 +157,7 @@ export function QuizForm() {
       onChange: (ev: { target: { value: string } }) => update(q.id, ev.target.value),
     };
     return (
-      <Question key={q.id} num={num} label={q.label} labelFor={q.id} error={errors[q.id]}>
+      <Question key={q.id} num={num} current={step === num - 1} label={q.label} labelFor={q.id} error={errors[q.id]}>
         {q.multiline ? <textarea {...props} /> : <input type="text" {...props} />}
       </Question>
     );
@@ -149,9 +179,16 @@ export function QuizForm() {
 
   return (
     <form noValidate onSubmit={onSubmit} className={`${sheet} flex flex-col`}>
+      <div className="flex flex-col gap-2.5 px-[18px] pt-5 sm:hidden" aria-live="polite">
+        <span className="text-sm font-medium tabular-nums text-faint">Вопрос {step + 1} из {order.length}</span>
+        <div className="h-1.5 overflow-hidden rounded-full bg-accent-soft">
+          <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${((step + 1) / order.length) * 100}%` }} />
+        </div>
+      </div>
+
       {renderText(textQuestions[0], 1)}
 
-      <Question num={2} label="Укажите ваш логин в Instagram" labelFor="instagram" error={errors.instagram}>
+      <Question num={2} current={step === 1} label="Укажите ваш логин в Instagram" labelFor="instagram" error={errors.instagram}>
         <div className="relative">
           <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-[15px] flex items-center text-muted">@</span>
           <input
@@ -165,7 +202,7 @@ export function QuizForm() {
 
       {textQuestions.slice(1).map((q, i) => renderText(q, i + 3))}
 
-      <Question num={6} label="Укажите способ связи" labelId="contact-label" error={errors.contact}>
+      <Question num={6} current={step === 5} label="Укажите способ связи" labelId="contact-label" error={errors.contact}>
         <div role="radiogroup" aria-labelledby="contact-label" className="grid grid-cols-2 gap-2.5">
           {(["Telegram", "WhatsApp"] as const).map((m) => (
             <label key={m} className="relative">
@@ -195,10 +232,35 @@ export function QuizForm() {
         className="absolute -left-[9999px]" value={honey} onChange={(ev) => setHoney(ev.target.value)}
       />
 
-      <div className="flex flex-col items-center gap-3.5 px-5 py-7 text-center sm:p-8">
+      <div className="flex flex-col items-center gap-3.5 px-[18px] pb-6 pt-4 text-center sm:p-8">
+        <div className="flex w-full gap-2.5 sm:hidden">
+          <button
+            type="button" onClick={() => goTo(step - 1)} disabled={step === 0}
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-5 py-4 font-medium leading-none text-muted transition-colors hover:border-accent hover:text-accent disabled:invisible"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 19l-7-7 7-7" /></svg>
+            Назад
+          </button>
+          {step < order.length - 1 ? (
+            <button
+              key="next" type="button" onClick={next}
+              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent px-5 py-4 font-semibold leading-none text-white transition-colors hover:bg-[#1d4ed8]"
+            >
+              Далее
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+            </button>
+          ) : (
+            <button
+              key="send" type="submit" disabled={status === "sending"}
+              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-cta px-5 py-4 font-semibold leading-none text-ink transition-colors hover:bg-cta-hover disabled:cursor-progress disabled:opacity-65"
+            >
+              {status === "sending" ? "Отправляем…" : "Отправить"}
+            </button>
+          )}
+        </div>
         <button
           type="submit" disabled={status === "sending"}
-          className="inline-flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg bg-cta px-8 py-[18px] text-[17px] font-semibold leading-none text-ink shadow-[0_1px_2px_rgb(15_23_42/.12)] transition-[background,box-shadow] hover:bg-cta-hover hover:shadow-[0_6px_16px_-8px_rgb(249_115_22/.7)] disabled:cursor-progress disabled:opacity-65 sm:w-auto"
+          className="inline-flex w-auto max-sm:hidden cursor-pointer items-center justify-center gap-2.5 rounded-lg bg-cta px-8 py-[18px] text-[17px] font-semibold leading-none text-ink shadow-[0_1px_2px_rgb(15_23_42/.12)] transition-[background,box-shadow] hover:bg-cta-hover hover:shadow-[0_6px_16px_-8px_rgb(249_115_22/.7)] disabled:cursor-progress disabled:opacity-65"
         >
           {status === "sending" ? "Отправляем…" : "Узнать, как увеличить прибыль"}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
