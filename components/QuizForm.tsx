@@ -6,9 +6,9 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 // После активации можно заменить адрес на секретный код из письма FormSubmit.
 const ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
 
-// Адрес Cloudflare Worker, который пересылает заявку в Telegram-бот (см. папку worker/).
-// Задаётся при сборке переменной NEXT_PUBLIC_TG_ENDPOINT; если она пустая, заявки идут только на почту.
-const TG_ENDPOINT = process.env.NEXT_PUBLIC_TG_ENDPOINT ?? "";
+// Адрес функции Supabase `lead`, которая сохраняет заявку в БД и шлёт её в Telegram-бот (см. папку supabase/).
+// Задаётся при сборке переменной NEXT_PUBLIC_LEAD_ENDPOINT (репозиторная переменная Actions LEAD_ENDPOINT); если она пустая, заявки идут только на почту.
+const LEAD_ENDPOINT = process.env.NEXT_PUBLIC_LEAD_ENDPOINT ?? "";
 
 type Messenger = "Telegram" | "WhatsApp";
 type FieldId = "sphere" | "instagram" | "channels" | "leads" | "dropoff" | "contact";
@@ -175,9 +175,9 @@ export function QuizForm() {
         if (!res.ok || String(out.success) === "false") throw new Error(out.message ?? String(res.status));
       }),
     ];
-    if (TG_ENDPOINT) {
+    if (LEAD_ENDPOINT) {
       channels.push(
-        fetch(TG_ENDPOINT, {
+        fetch(LEAD_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

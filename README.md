@@ -26,24 +26,26 @@ npm run build    # статический сайт в папке out/
 Домен: **landing.sultech.site**. У регистратора домена sultech.site добавлена запись
 `CNAME landing → rasuldev1.github.io`, а в Settings → Pages → Custom domain указан `landing.sultech.site` и включён Enforce HTTPS.
 
-## Заявки в Telegram-бот
+## Заявки в Telegram-бот и база Supabase
 
-Заявки приходят и на почту, и в личный Telegram-бот. Токен бота нельзя класть в код сайта (его увидит любой посетитель), поэтому
-сайт отправляет заявку на маленький Cloudflare Worker (папка `worker/`), а тот пересылает её в бота. Токен и ваш chat id лежат в секретах Worker.
-Бот приватный: он ничего не читает, а Worker отправляет сообщения только в ваш чат и принимает запросы только с адреса сайта.
+Заявки приходят на почту, в личный Telegram-бот и сохраняются в таблицу `leads` в Supabase. Токен бота нельзя класть в код сайта
+(его увидит любой посетитель), поэтому сайт отправляет заявку в функцию Supabase `lead` (папка `supabase/`), а она сохраняет её и пересылает в бота.
+Токен и ваш chat id лежат в секретах функции. Бот приватный: он ничего не читает, функция пишет только в ваш чат и принимает запросы только с адреса сайта.
+Таблица закрыта политикой безопасности (RLS без политик): через публичный ключ сайта её нельзя ни прочитать, ни изменить.
 
 1. **Бот.** В Telegram откройте `@BotFather`, команда `/newbot`, получите токен вида `123456:ABC...`. Никому его не показывайте и не вставляйте в чат.
-2. **Ваш chat id.** Откройте своего нового бота и нажмите Start (или напишите ему любое сообщение). Затем откройте в браузере
-   `https://api.telegram.org/bot<ТОКЕН>/getUpdates` и найдите `"chat":{"id":123456789` — это ваш id.
-3. **Worker.** Зарегистрируйтесь на cloudflare.com (бесплатно), затем в папке `worker/`:
+2. **Ваш chat id.** Откройте нового бота и нажмите Start. Затем откройте в браузере
+   `https://api.telegram.org/bot<ТОКЕН>/getUpdates` и найдите `"chat":{"id":123456789`, это ваш id.
+3. **Supabase.** Установите CLI (`npm i -g supabase` или `npx supabase`), затем в корне репозитория:
    ```bash
-   npx wrangler login
-   npx wrangler deploy
-   npx wrangler secret put BOT_TOKEN        # вставьте токен
-   npx wrangler secret put OWNER_CHAT_ID    # вставьте chat id
+   npx supabase login
+   npx supabase link --project-ref <ref вашего проекта>
+   npx supabase db push                       # создаст таблицу leads
+   npx supabase secrets set BOT_TOKEN=<токен> OWNER_CHAT_ID=<chat id> ALLOWED_ORIGIN=https://landing.sultech.site
+   npx supabase functions deploy lead --no-verify-jwt
    ```
-   Команда `deploy` напечатает адрес вида `https://anketa-telegram.<ваш-аккаунт>.workers.dev`.
+   Адрес функции: `https://<ref>.supabase.co/functions/v1/lead`.
 4. **Адрес в сайт.** В репозитории: Settings → Secrets and variables → Actions → вкладка **Variables** → New repository variable:
-   имя `TG_ENDPOINT`, значение — адрес Worker. Затем перезапустите деплой (Actions → Deploy to GitHub Pages → Run workflow).
+   имя `LEAD_ENDPOINT`, значение — адрес функции. Затем перезапустите деплой (Actions → Deploy to GitHub Pages → Run workflow).
 
-Пока переменная `TG_ENDPOINT` не задана, заявки приходят только на почту. Если не сработал один из двух каналов, заявка всё равно считается принятой.
+Пока переменная `LEAD_ENDPOINT` не задана, заявки приходят только на почту. Если один из каналов не сработал, заявка всё равно считается принятой.

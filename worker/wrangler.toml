@@ -1,6 +1,0 @@
-name = "anketa-telegram"
-main = "index.mjs"
-compatibility_date = "2025-01-01"
-
-[vars]
-ALLOWED_ORIGIN = "https://landing.sultech.site"

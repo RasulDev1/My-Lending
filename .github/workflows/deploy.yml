@@ -30,8 +30,8 @@ jobs:
       #     NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
       - run: npm run build
         env:
-          # Адрес Worker для Telegram-бота: Settings → Secrets and variables → Actions → Variables → TG_ENDPOINT
-          NEXT_PUBLIC_TG_ENDPOINT: ${{ vars.TG_ENDPOINT }}
+          # Адрес функции Supabase `lead`: Settings → Secrets and variables → Actions → Variables → LEAD_ENDPOINT
+          NEXT_PUBLIC_LEAD_ENDPOINT: ${{ vars.LEAD_ENDPOINT }}
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
