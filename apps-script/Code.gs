@@ -4,7 +4,7 @@
 // Необязательно: если в «Свойствах скрипта» (Project Settings → Script properties) заданы
 // BOT_TOKEN и OWNER_CHAT_ID, заявка дополнительно уходит в личный Telegram-бот.
 
-var EMAIL = 'ddzon4553@gmail.com'; // куда присылать заявки
+var EMAIL = 'tyagainstrument@gmail.com'; // куда присылать заявки
 
 // [ключ в запросе сайта, подпись в письме]
 var FIELDS = [

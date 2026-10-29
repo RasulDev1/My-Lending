@@ -1,6 +1,6 @@
 # Автоматизация Бизнеса — анкета
 
-Пошаговый квиз из 6 вопросов (5 шагов, Instagram — вторым). Ответы приходят на почту ddzon4553@gmail.com через [FormSubmit](https://formsubmit.co).
+Пошаговый квиз из 6 вопросов (5 шагов, Instagram — вторым). Ответы приходят на почту tyagainstrument@gmail.com через [FormSubmit](https://formsubmit.co).
 
 Стек: Next.js (App Router, статический экспорт), Tailwind CSS 4, TypeScript.
 
@@ -28,7 +28,7 @@ npm run build    # статический сайт в папке out/
 
 ## Заявки: Google Apps Script (как на сайте «Тяга»)
 
-Сайт отправляет заявку на веб-приложение Google Apps Script. Скрипт (`apps-script/Code.gs`) только отправляет письмо на ddzon4553@gmail.com (адрес в переменной `EMAIL` вверху файла, таблицы нет)
+Сайт отправляет заявку на веб-приложение Google Apps Script. Скрипт (`apps-script/Code.gs`) только отправляет письмо на tyagainstrument@gmail.com (адрес в переменной `EMAIL` вверху файла, таблицы нет)
 и, если заданы свойства `BOT_TOKEN` и `OWNER_CHAT_ID`, дублирует заявку в личный Telegram-бот. Токен хранится только в свойствах скрипта и не попадает в код сайта.
 
 1. Откройте [script.google.com](https://script.google.com) → New project.
