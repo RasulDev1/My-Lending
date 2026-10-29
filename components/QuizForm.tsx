@@ -4,14 +4,14 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 
 // Заявки уходят на почту через FormSubmit (formsubmit.co).
 // После активации можно заменить адрес на секретный код из письма FormSubmit.
-const ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
+const ENDPOINT = "https://formsubmit.co/ajax/tyagainstrument@gmail.com";
 
 // Заявки принимает Google Apps Script (так же, как на сайте «Тяга»): записывает в таблицу и шлёт письмо.
 // Код скрипта лежит в apps-script/Code.gs. Адрес веб-приложения задаётся при сборке переменной
 // NEXT_PUBLIC_LEAD_ENDPOINT (репозиторная переменная Actions LEAD_ENDPOINT).
 // Пока она пустая, заявки уходят через запасной сервис FormSubmit на почту.
 const LEAD_ENDPOINT = process.env.NEXT_PUBLIC_LEAD_ENDPOINT ?? "";
-const FALLBACK_ENDPOINT = "https://formsubmit.co/ajax/ddzon4553@gmail.com";
+const FALLBACK_ENDPOINT = "https://formsubmit.co/ajax/tyagainstrument@gmail.com";
 
 type Messenger = "Telegram" | "WhatsApp";
 type FieldId = "sphere" | "instagram" | "channels" | "leads" | "dropoff" | "contact";
